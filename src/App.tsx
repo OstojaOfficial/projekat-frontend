@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.scss';
 import axios from 'axios';
-import { Table, Popconfirm, Space, Button, Modal, ConfigProvider, Input, theme } from "antd";
-import type { TableProps } from 'antd';
+import moment from "moment";
+import { Table, Popconfirm, DatePicker, Space, Button, Modal, ConfigProvider, Input, theme } from "antd";
+import type { DatePickerProps, TableProps } from 'antd';
+import type { Dayjs } from 'dayjs';
 
 interface Todo {
   id: number;
@@ -107,6 +109,22 @@ const App: React.FC = () => {
     }
   };
 
+  const onDateSearch: DatePickerProps<Dayjs[]>['onChange'] = async (_, dateString) => {
+    if(dateString) {
+      try {
+        const formattedDate = moment(dateString).format("YYYY-MM-DDTHH:mm:ss.SSSSSS");
+        const response = await axios.get<Todo[]>(`http://localhost:8080/api/todo/date/${formattedDate}`);
+        // Sort todo list by datetime in descending order
+        const sortedTodoList = response.data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setTodos(sortedTodoList);
+      } catch (error) {
+        console.error('Error fetching todos:', error);
+      }
+    } else {
+      fetchTodos();
+    }
+  };
+
   // Add new task
   const addTodo = async () => {
     try {
@@ -140,7 +158,6 @@ const App: React.FC = () => {
   };
 
   // FILTER BY TITLE
-  // FILTER BY DATE AFTER
 
   return (
     <ConfigProvider
@@ -161,22 +178,24 @@ const App: React.FC = () => {
             confirmLoading={confirmLoading}
             onCancel={handleCancel}
           >
-          <Input
-            type="text"
-            name="title"
-            placeholder="Title"
-            value={newTodo.title}
-            onChange={handleChange}
-          />
-          <Input
-            type="text"
-            name="description"
-            placeholder="Description"
-            value={newTodo.description}
-            onChange={handleChange}
-          />
+            <Input
+              type="text"
+              name="title"
+              placeholder="Title"
+              value={newTodo.title}
+              onChange={handleChange}
+            />
+            <Input
+              type="text"
+              name="description"
+              placeholder="Description"
+              value={newTodo.description}
+              onChange={handleChange}
+            />
             <p>Enter title and description of the task.</p>
           </Modal>
+          <br></br><br></br>
+          <DatePicker onChange={onDateSearch} showTime needConfirm />
         </div>
         <br></br>
         <Table columns={columns} dataSource={todos} pagination={false}></Table>
