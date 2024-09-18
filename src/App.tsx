@@ -157,8 +157,6 @@ const App: React.FC = () => {
     });
   };
 
-  // FILTER BY TITLE
-
   return (
     <ConfigProvider
       theme={{
